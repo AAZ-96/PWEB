@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>BantuIn — Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -504,6 +505,19 @@
     </style>
   </head>
   <body>
+    <script>
+      // Bridge Laravel session to JS localStorage
+      @if(auth()->check())
+        localStorage.setItem('bantuin_current_user', JSON.stringify({
+            id: {{ auth()->id() }},
+            name: "{{ auth()->user()->name }}",
+            email: "{{ auth()->user()->email }}",
+            role: "{{ auth()->user()->role }}"
+        }));
+      @else
+        localStorage.removeItem('bantuin_current_user');
+      @endif
+    </script>
     <!-- ═══════ SIDEBAR ═══════ -->
     <aside
       class="sidebar"
@@ -654,7 +668,7 @@
         >
           Sistem
         </div>
-        <a class="nav-link" href="./index.html">
+        <a class="nav-link" href="/">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10 17l1.4-1.4L8.8 13H20v-2H8.8l2.6-2.6L10 7l-7 7 7 7Z" />
           </svg>
@@ -1543,210 +1557,37 @@
 
       // Array of Objects — data kampanye
       const campaigns = [
+        @foreach($campaigns as $c)
         {
-          id: 1,
-          title: "Sedekah Pendidikan Anak Indonesia",
-          creator: "Rina Sari",
-          creatorEmail: "rina@mail.com",
-          role: "Fundraiser",
-          category: "Pendidikan",
-          target: 50000000,
-          collected: 37500000,
-          deadline: "2026-06-15",
-          status: "active",
-          submitted: "2026-01-10",
-          description:
-            "Membantu biaya pendidikan anak kurang mampu di pelosok Jawa Timur.",
+          id: {{ $c->id }},
+          title: "{!! addslashes($c->title) !!}",
+          creator: "{!! addslashes($c->creator ? $c->creator->name : ($c->pic_name ?: 'Fundraiser')) !!}",
+          creatorEmail: "{!! addslashes($c->creator ? $c->creator->email : '') !!}",
+          role: "{!! addslashes($c->creator ? ucfirst($c->creator->role) : 'Fundraiser') !!}",
+          category: "{!! addslashes(ucfirst($c->cat)) !!}",
+          target: {{ $c->target }},
+          collected: {{ $c->collected }},
+          deadline: "{{ $c->start_date ? $c->start_date->addDays($c->days)->format('Y-m-d') : now()->addDays($c->days)->format('Y-m-d') }}",
+          status: "{{ $c->status }}",
+          submitted: "{{ $c->created_at->format('Y-m-d') }}",
+          description: "{!! addslashes(str_replace(["\r", "\n"], ' ', $c->desc)) !!}"
         },
-        {
-          id: 2,
-          title: "Air Bersih untuk Desa Terpencil",
-          creator: "Budi Santoso",
-          creatorEmail: "budi@mail.com",
-          role: "Fundraiser",
-          category: "Lingkungan",
-          target: 30000000,
-          collected: 18000000,
-          deadline: "2026-07-01",
-          status: "active",
-          submitted: "2026-01-22",
-          description:
-            "Pembangunan sumur bor dan instalasi air bersih di 3 desa terpencil.",
-        },
-        {
-          id: 3,
-          title: "Bantuan Medis Pasca Bencana",
-          creator: "Siti Rahayu",
-          creatorEmail: "siti@mail.com",
-          role: "Fundraiser",
-          category: "Kesehatan",
-          target: 100000000,
-          collected: 40000000,
-          deadline: "2026-05-20",
-          status: "active",
-          submitted: "2026-02-01",
-          description:
-            "Penyediaan obat-obatan dan layanan medis darurat bagi korban bencana.",
-        },
-        {
-          id: 4,
-          title: "Rumah Singgah Anak Yatim",
-          creator: "Hendra Wijaya",
-          creatorEmail: "hendra@mail.com",
-          role: "Fundraiser",
-          category: "Sosial",
-          target: 75000000,
-          collected: 0,
-          deadline: "2026-08-01",
-          status: "pending",
-          submitted: "2026-03-28",
-          description:
-            "Pembangunan rumah singgah yang layak untuk anak-anak yatim di Surabaya.",
-        },
-        {
-          id: 5,
-          title: "Beasiswa Mahasiswa Berprestasi",
-          creator: "Dewi Lestari",
-          creatorEmail: "dewi@mail.com",
-          role: "Fundraiser",
-          category: "Pendidikan",
-          target: 60000000,
-          collected: 0,
-          deadline: "2026-09-01",
-          status: "pending",
-          submitted: "2026-04-01",
-          description:
-            "Program beasiswa untuk 10 mahasiswa berprestasi dari keluarga kurang mampu.",
-        },
-        {
-          id: 6,
-          title: "Kebun Gizi Komunitas",
-          creator: "Agus Maulana",
-          creatorEmail: "agus@mail.com",
-          role: "Fundraiser",
-          category: "Kesehatan",
-          target: 20000000,
-          collected: 0,
-          deadline: "2026-07-20",
-          status: "pending",
-          submitted: "2026-04-03",
-          description:
-            "Pembuatan kebun gizi komunitas untuk mengatasi stunting di kelurahan.",
-        },
-        {
-          id: 7,
-          title: "Renovasi Masjid Tua Bersejarah",
-          creator: "Fajar Nugroho",
-          creatorEmail: "fajar@mail.com",
-          role: "Fundraiser",
-          category: "Sosial",
-          target: 40000000,
-          collected: 40000000,
-          deadline: "2026-03-01",
-          status: "done",
-          submitted: "2025-12-01",
-          description: "Renovasi masjid bersejarah abad ke-17 di Gresik.",
-        },
-        {
-          id: 8,
-          title: "Dapur Umum Lansia Terlantar",
-          creator: "Maya Putri",
-          creatorEmail: "maya@mail.com",
-          role: "Fundraiser",
-          category: "Sosial",
-          target: 15000000,
-          collected: 5000000,
-          deadline: "2026-04-01",
-          status: "rejected",
-          submitted: "2026-02-15",
-          description:
-            "Kampanye ini tidak memenuhi persyaratan dokumentasi yang diperlukan.",
-        },
+        @endforeach
       ];
 
       // Array of Objects — data pengguna
       const users = [
+        @foreach($users as $u)
         {
-          id: 1,
-          name: "Rina Sari",
-          email: "rina@mail.com",
-          role: "Fundraiser",
-          campaigns: 3,
-          joined: "2025-08-14",
-          active: true,
+          id: {{ $u->id }},
+          name: "{!! addslashes($u->name) !!}",
+          email: "{!! addslashes($u->email) !!}",
+          role: "{{ ucfirst($u->role) }}",
+          campaigns: {{ $u->campaigns_count }},
+          joined: "{{ $u->created_at->format('Y-m-d') }}",
+          active: {{ $u->active ? 'true' : 'false' }},
         },
-        {
-          id: 2,
-          name: "Budi Santoso",
-          email: "budi@mail.com",
-          role: "Fundraiser",
-          campaigns: 2,
-          joined: "2025-09-22",
-          active: true,
-        },
-        {
-          id: 3,
-          name: "Siti Rahayu",
-          email: "siti@mail.com",
-          role: "Fundraiser",
-          campaigns: 1,
-          joined: "2025-10-05",
-          active: true,
-        },
-        {
-          id: 4,
-          name: "Reza Ahmad",
-          email: "reza@mail.com",
-          role: "Donatur",
-          campaigns: 0,
-          joined: "2025-11-18",
-          active: true,
-        },
-        {
-          id: 5,
-          name: "Hendra Wijaya",
-          email: "hendra@mail.com",
-          role: "Fundraiser",
-          campaigns: 1,
-          joined: "2026-01-03",
-          active: true,
-        },
-        {
-          id: 6,
-          name: "Dewi Lestari",
-          email: "dewi@mail.com",
-          role: "Fundraiser",
-          campaigns: 1,
-          joined: "2026-02-10",
-          active: true,
-        },
-        {
-          id: 7,
-          name: "Agus Maulana",
-          email: "agus@mail.com",
-          role: "Fundraiser",
-          campaigns: 1,
-          joined: "2026-03-01",
-          active: true,
-        },
-        {
-          id: 8,
-          name: "Ayu Pramesti",
-          email: "ayu@mail.com",
-          role: "Donatur",
-          campaigns: 0,
-          joined: "2025-12-20",
-          active: true,
-        },
-        {
-          id: 9,
-          name: "Rizal H.",
-          email: "rizal@mail.com",
-          role: "Donatur",
-          campaigns: 0,
-          joined: "2026-01-15",
-          active: false,
-        },
+        @endforeach
       ];
 
       // ── Utility Functions ──
@@ -1888,50 +1729,99 @@
       }
 
       // ── Approve / Reject Campaign ──
-      function approveCampaign(id) {
-        // Find using for loop
-        for (let i = 0; i < campaigns.length; i++) {
-          if (campaigns[i].id === id) {
-            campaigns[i].status = "active";
-            break;
+      async function approveCampaign(id) {
+        try {
+          const response = await fetch(`/admin/campaigns/${id}/approve`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+          });
+          const result = await response.json();
+          if (result.ok) {
+            for (let i = 0; i < campaigns.length; i++) {
+              if (campaigns[i].id === id) {
+                campaigns[i].status = "active";
+                break;
+              }
+            }
+            updatePendingCount();
+            closeModal();
+            renderApprovals();
+            renderOverview();
+            showToast("Kampanye berhasil disetujui!", "success");
+          } else {
+            showToast("Gagal menyetujui kampanye.", "error");
           }
+        } catch (e) {
+          console.error(e);
+          showToast("Terjadi kesalahan jaringan.", "error");
         }
-        updatePendingCount();
-        closeModal();
-        renderApprovals();
-        renderOverview();
-        showToast("Kampanye berhasil disetujui!", "success");
       }
 
-      function rejectCampaign(id) {
-        for (let i = 0; i < campaigns.length; i++) {
-          if (campaigns[i].id === id) {
-            campaigns[i].status = "rejected";
-            break;
+      async function rejectCampaign(id) {
+        try {
+          const response = await fetch(`/admin/campaigns/${id}/reject`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+          });
+          const result = await response.json();
+          if (result.ok) {
+            for (let i = 0; i < campaigns.length; i++) {
+              if (campaigns[i].id === id) {
+                campaigns[i].status = "rejected";
+                break;
+              }
+            }
+            updatePendingCount();
+            closeModal();
+            renderApprovals();
+            renderOverview();
+            showToast("Kampanye telah ditolak.", "error");
+          } else {
+            showToast("Gagal menolak kampanye.", "error");
           }
+        } catch (e) {
+          console.error(e);
+          showToast("Terjadi kesalahan jaringan.", "error");
         }
-        updatePendingCount();
-        closeModal();
-        renderApprovals();
-        renderOverview();
-        showToast("Kampanye telah ditolak.", "error");
       }
 
       // ── Delete Campaign ──
-      function deleteCampaign(id) {
-        // Conditional confirm
+      async function deleteCampaign(id) {
         if (
           confirm(
             "Yakin ingin menghapus kampanye ini? Tindakan ini tidak dapat dibatalkan.",
           )
         ) {
-          const idx = campaigns.findIndex((c) => c.id === id);
-          if (idx !== -1) campaigns.splice(idx, 1);
-          updatePendingCount();
-          closeModal();
-          renderCampaignTable();
-          renderOverview();
-          showToast("Kampanye berhasil dihapus.", "warning");
+          try {
+            const response = await fetch(`/admin/campaigns/${id}/delete`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+              }
+            });
+            const result = await response.json();
+            if (result.ok) {
+              const idx = campaigns.findIndex((c) => c.id === id);
+              if (idx !== -1) campaigns.splice(idx, 1);
+              updatePendingCount();
+              closeModal();
+              renderCampaignTable();
+              renderOverview();
+              showToast("Kampanye berhasil dihapus.", "warning");
+            } else {
+              showToast("Gagal menghapus kampanye.", "error");
+            }
+          } catch (e) {
+            console.error(e);
+            showToast("Terjadi kesalahan jaringan.", "error");
+          }
         }
       }
 
@@ -2370,9 +2260,9 @@
       // ── Auth guard: only admin can access this page ──
       (function () {
         const user = JSON.parse(localStorage.getItem('bantuin_current_user') || 'null');
-        if (!user) { window.location.href = './index.html'; }
+        if (!user) { window.location.href = '/'; }
         else if (user.role !== 'admin') {
-          const url = user.role === 'fundraiser' ? './fundraiser.html' : './donatur.html';
+          const url = user.role === 'fundraiser' ? '/fundraiser' : '/donatur';
           window.location.href = url;
         }
       })();
