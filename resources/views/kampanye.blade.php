@@ -386,32 +386,14 @@
     </div>
 
     <script>
-    // DATA DUMMY KAMPANYE
-    // ── Data bawaan (dari database) ──
     const STATIC_CAMPAIGNS = @json($campaigns);
 
-    // ── Gabungkan dengan kampanye dari localStorage ──
-    function getLocalCampaigns() {
-      return JSON.parse(localStorage.getItem('bantuin_campaigns') || '[]');
-    }
-
     function buildAllCampaigns() {
-      const local = getLocalCampaigns().map(c => ({
-        id: c.id,
-        title: c.title,
-        cat: c.cat,
-        img: c.img || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=60',
-        desc: c.desc,
-        fundraiser: c.fundraiser,
-        collected: Number(c.collected) || 0,
-        target: Number(c.target),
-        days: Number(c.days) || 30,
-        donors: Number(c.donors) || 0,
-        featured: false,
-        isNew: true,   // tandai kampanye baru dari fundraiser
+      return STATIC_CAMPAIGNS.map(c => ({
+        ...c,
+        donors: c.donors ?? 0,
+        isNew: false,
       }));
-      // Kampanye baru ditampilkan paling atas
-      return [...local, ...STATIC_CAMPAIGNS];
     }
 
     // CAMPAIGNS sekarang dinamis — dibangun ulang tiap render

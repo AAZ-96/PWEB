@@ -85,7 +85,7 @@ class CampaignController extends Controller
             'collected' => 0,
             'days' => $request->days,
             'start_date' => $request->startDate,
-            'status' => 'pending', // default pending approval
+            'status' => 'active', // langsung aktif agar kampanye muncul segera
             'pic_name' => $request->pic_name,
             'pic_phone' => $request->pic_phone,
             'social' => $request->social,

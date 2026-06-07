@@ -37,26 +37,10 @@ class Campaign extends Model
 
     public function getDonorsAttribute()
     {
-        $mockDonors = [
-            1 => 324,
-            2 => 892,
-            3 => 567,
-            4 => 214,
-            5 => 448,
-            6 => 1205,
-            7 => 378,
-            8 => 2341,
-            9 => 612,
-            10 => 291,
-            11 => 987,
-            12 => 176,
-            13 => 820,
-            14 => 550,
-            15 => 200,
-            16 => 75
-        ];
-        $base = $mockDonors[$this->id] ?? 0;
-        return $base + $this->donations()->count();
+        return $this->donations()
+            ->where('status', 'success')
+            ->distinct()
+            ->count('user_id');
     }
 
     public function creator()
